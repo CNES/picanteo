@@ -1,0 +1,10 @@
+# step_output_dir (str|Path): path to the step output directory    
+step_output_dir: <step_output_path>
+# create_logdir (bool): flag indicating that the step produce logs    
+create_logdir: True
+
+### Bulldozer config ###
+# dsm_path (str|Path): path to the input DSM    
+dsm_path: <input_dsm>.tif
+# output_dir (str|Path): same path as step_output_dir
+output_dir: <step_output_path>

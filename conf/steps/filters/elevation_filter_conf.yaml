@@ -1,0 +1,12 @@
+# step_output_dir (str|Path): path to the step output directory    
+step_output_dir: <output_path>
+# raster_to_filter (str|Path): path to the input raster to filter    
+raster_to_filter: <input_raster>.tif
+# filter (str|Path): path to the NDVI map that is used to filter
+filter: <input_ndvi>.tif
+# out_name (str, optional): output file name with extension
+out_name: <input_raster_refined>.tif
+# threshold (float): elevation threshold in meters
+threshold: -4.0
+# greater (bool): if True, keep only the points that are greater than the threshold
+greater: False

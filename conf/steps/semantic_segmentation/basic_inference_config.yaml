@@ -1,0 +1,23 @@
+dataloader:
+  batch_size: 8
+  num_workers: 1
+dataset:
+  overlap: 256 #128
+  padding: false
+  patch_size: 512 #256
+  shifted_border: true
+description: null
+input_img_path: ???
+model:
+  _target_: segmentation_models_pytorch.MAnet
+  activation: null
+  classes: 1
+  decoder_use_batchnorm: true
+  encoder_depth: 5
+  encoder_name: efficientnet-b7
+  encoder_weights: null
+  in_channels: 3
+num_classes: 2
+pretrained_weights: docs/tutorials/data/weights/manet_cos1_weights.ckpt
+step_output_dir: ???
+reprojection_dsm: null

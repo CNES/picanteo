@@ -1,0 +1,21 @@
+# step_output_dir (str|Path): path to the step output directory    
+step_output_dir: <step_output_path>
+# create_logdir (bool): flag indicating that the step produce logs    
+create_logdir: True
+
+### CARS config ###
+inputs:
+  # sensors (dict): dict containing set of images (in this example: img1, img2)    
+  sensors:
+    # <img1> (dict): dict containing image path (.tif or .xml) and associated geomodel path (.tif or .xml)
+    img1:
+      image: <img1>.tif
+      geomodel: <img1>.geom
+    # <img2> (dict): dict containing image path (.tif or .xml) and associated geomodel path (.tif or .xml)
+    img2:
+      image: <img2>.tif
+      geomodel: <img2>.geom
+output:
+  # directory (str|Path): same path as step_output_dir
+  directory: <step_output_path>
+
