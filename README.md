@@ -50,7 +50,7 @@ picanteo my_conf.yaml
 
 If you want to try the pipelines already available in **Picanteo**, you have to download the weights from our model with this [link](https://drive.google.com/uc?id=1n1olMUY3ycx48YRZ7ZG-ME63cNjnRBtc). Then you have to move those weights in a specific folder:
 ```sh
-mv weights.ckpt docs/tutorials/data/weights/manet_cos1_weights.ckpt
+mkdir docs/tutorials/data/weights && mv weights.ckpt docs/tutorials/data/weights/manet_cos1_weights.ckpt
 ```
 Then you can run the following command to launch the bitemporal 2D/3D change detection pipeline demo:
 ```sh
