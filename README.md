@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="docs/images/logo_with_text.png" width=500>
+    <img src="https://raw.githubusercontent.com/CNES/picanteo/master/docs/images/logo_with_text.png" width=500>
 
 **Picanteo: CNES change detection framework for natural disaster response**
 
@@ -13,7 +13,7 @@
 **Picanteo** is a flexible and modular framework developed by CNES for building custom change detection pipelines. It provides a set of tools in the `picanteo/toolbox` module, allowing users to create tailored pipelines or integrate their own tools to extend functionality.  
 Whether you're analyzing satellite imagery or other geospatial data, **Picanteo** simplifies the process of detecting changes in dynamic environments.
 <div align="center">
-    <img src="docs/images/picanteo_visualize.png" width=1024>
+    <img src="https://raw.githubusercontent.com/CNES/picanteo/master/docs/images/picanteo_visualize.png" width=1024>
 </div>   
 
 
