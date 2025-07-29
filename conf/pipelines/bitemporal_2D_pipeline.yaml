@@ -1,0 +1,22 @@
+# pipeline (str): describe the pipeline to run    
+pipeline: bitemporal_2D
+# pipeline_output_dir (str|Path): path to the step output directory    
+pipeline_output_dir: demo_bitemporal_2D_pipeline
+# save_intermediate_data (bool, optional): if True, retains intermediate files generated during the pipeline execution. 
+save_intermediate_data: True
+
+### Input data ###
+# pre_event (dict): dict containing set of at least 1 image (in this example: image1)    
+pre_event:
+  # <image1> (str|Path): path to the input color image (.tif)
+    image1: "docs/tutorials/data/ortho_pre_crop_05.tif"
+
+# post_event (dict): dict containing set of at least 1 image (in this example: image1)    
+post_event:
+  image1: "docs/tutorials/data/ortho_post_crop_05.tif"
+
+### Pipeline step configuration ###
+# <step>_conf (str|Path): Path to the <step> yaml configuration file template
+semantic_segmentation_conf: "conf/steps/semantic_segmentation/basic_inference_config.yaml"
+uncertainty_filter_conf: "conf/steps/filters/uncertainty_filter_conf.yaml"
+morphologic_filter_conf: "conf/steps/filters/morphologic_filter.yaml"

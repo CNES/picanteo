@@ -1,0 +1,8 @@
+step_output_dir: tutorial_bitemporal_2D3D_pipeline/ambiguity_filter_post
+save_intermediate_data: True
+raster_to_filter: tutorial_bitemporal_2D3D_pipeline/ambiguity_filter_pre/3D_binary_raw_diff_ambiguity_pre_refined.tif
+filter: tutorial_bitemporal_2D3D_pipeline/dsm_extraction_post/confidence_from_ambiguity_cars_1.tif
+greater: true
+threshold: 0.5
+out_name: 3D_binary_raw_diff_ambiguity_post_refined.tif
+

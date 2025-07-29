@@ -1,0 +1,52 @@
+# step_output_dir (str|Path): path to the step output directory
+step_output_dir: demo_bitemporal_2D3D_pipeline
+
+### Panel visualization config ###
+title: 'Change Detection Dashboard'
+logo: "https://raw.githubusercontent.com/dimitriLallement/Change_detection_pipeline_illustration/main/ai4geo_logo.png"
+pages:
+  2d3d:
+    Title: 'Bitemporal 2D/3D Pipeline'
+    local_data_dir: 'demo_bitemporal_2D3D_pipeline/data_visualization/'
+    Visu:
+      Name: 'Visualisation'
+      Map: True
+      2D:
+        pre_event:
+          id: 'pre'
+          name: 'pre_event'
+          path: 'pre_event'
+        post_event:
+          id: 'post'
+          name: 'post_event'
+          path: 'post_event'
+        3D:
+          id: '3d'
+          name: '3d'
+          path: '3D'
+
+  2d:
+    Title: 'Bitemporal 2D Pipeline'
+    local_data_dir: 'demo_bitemporal_2D_pipeline/data_visualization/'
+    Visu:
+      Name: 'Visualisation'
+      Map: True
+      2D:
+        pre_event:
+          id: 'pre'
+          name: 'pre_event'
+          path: 'pre_event'
+        post_event:
+          id: 'post'
+          name: 'post_event'
+          path: 'post_event'
+
+    Process1:
+      Name: 'Pipeline Description'
+      Map: False
+      Texte : 'Placeholder for your Pipeline description'
+
+settings:
+  localhost: "http://127.0.0.42:8080"
+  local_data_dir: 'demo_bitemporal_2D3D_pipeline/data_visualization/'
+  map_height: 600

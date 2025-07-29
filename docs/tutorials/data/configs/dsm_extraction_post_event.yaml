@@ -1,0 +1,26 @@
+step_output_dir: tutorial_bitemporal_2D3D_pipeline/dsm_extraction_post
+create_logdir: True
+save_intermediate_data: True
+
+### CARS config ###
+inputs:
+  sensors:
+    img1:
+      image: data/post_event_img1.tif
+      geomodel: data/post_event_img1.geom
+    img2:
+      image: data/post_event_img2.tif
+      geomodel: data/post_event_img2.geom
+  roi:
+    type: FeatureCollection
+    features:
+    - type: Feature
+      properties: {}
+      geometry:
+        coordinates: [[[36.9065743, 37.5868101],[36.9065743, 37.5825656],[36.9122907, 37.5825656],[36.9122907, 37.5868101],[36.9065743, 37.5868101]]]
+        type: Polygon   
+output:
+  auxiliary:
+    ambiguity: true
+  directory: tutorial_bitemporal_2D3D_pipeline/dsm_extraction_post
+

@@ -1,0 +1,51 @@
+# pipeline (str): describe the pipeline to run    
+pipeline: bitemporal_2d3d
+# pipeline_output_dir (str|Path): path to the step output directory    
+pipeline_output_dir: demo_bitemporal_2D3D_pipeline
+# save_intermediate_data (bool, optional): if True, retains intermediate files generated during the pipeline execution. 
+save_intermediate_data: True
+
+### Pipeline steps configuration ###
+# <step>_conf (str|Path): Path to the <step> yaml configuration file template
+semantic_segmentation_conf: "conf/steps/semantic_segmentation/basic_inference_config.yaml"
+dsm_extraction_conf: "conf/steps/dsm_extraction_conf.yaml"
+dtm_extraction_conf: "conf/steps/dtm_extraction_conf.yaml"
+uncertainty_filter_conf: "conf/steps/filters/uncertainty_filter_conf.yaml"
+elevation_filter_conf: "conf/steps/filters/elevation_filter_conf.yaml"
+ambiguity_filter_conf: "conf/steps/filters/ambiguity_filter_conf.yaml"
+ndvi_filter_conf: "conf/steps/filters/ndvi_filter_conf.yaml"
+morphologic_filter_conf: "conf/steps/filters/morphologic_filter.yaml"
+boolean_maps_merge_conf: "conf/steps/boolean_maps_merge_conf.yaml"
+
+### Input data ###
+# pre_event (dict): dict containing set of at least 2 images (in this example: acquisition1, acquisition2)    
+pre_event:
+  # <acquisition1> (dict): dict containing image path (.tif or .xml) and associated geomodel path (.tif or .xml) and color path (.tif)
+  acquisition1:
+    image: "docs/tutorials/data/pre_event_img1.tif"
+    geomodel: "docs/tutorials/data/pre_event_img1.geom"
+    color: "docs/tutorials/data/pre_event_color1.tif"
+  acquisition2:
+    image: "docs/tutorials/data/pre_event_img2.tif"
+    geomodel: "docs/tutorials/data/pre_event_img2.geom"
+    color: "docs/tutorials/data/pre_event_color2.tif"
+# post_event (dict): dict containing set of at least 2 images (in this example: acquisition1, acquisition2)    
+post_event:
+  acquisition1:
+    image: "docs/tutorials/data/post_event_img1.tif"
+    geomodel: "docs/tutorials/data/post_event_img1.geom"
+    color: "docs/tutorials/data/post_event_color1.tif"
+  acquisition2:
+    image: "docs/tutorials/data/post_event_img2.tif"
+    geomodel: "docs/tutorials/data/post_event_img2.geom"
+    color: "docs/tutorials/data/post_event_color2.tif"
+# roi (dict, optional): optional region of interest (expect GeoJSON format)
+roi:
+  type: FeatureCollection
+  features:
+  - type: Feature
+    properties: {}
+    geometry:
+      coordinates: [[[36.9065743, 37.5868101],[36.9065743, 37.5825656],[36.9122907, 37.5825656],[36.9122907, 37.5868101],[36.9065743, 37.5868101]]]
+      type: Polygon
+ 

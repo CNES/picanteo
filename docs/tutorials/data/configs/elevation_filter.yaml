@@ -1,0 +1,7 @@
+step_output_dir: tutorial_bitemporal_2D3D_pipeline/elevation_filter
+save_intermediate_data: True
+raster_to_filter: tutorial_bitemporal_2D3D_pipeline/3D_binary_raw_diff.tif
+filter: tutorial_bitemporal_2D3D_pipeline/3D_raw_diff.tif
+greater: false
+threshold: -2.0
+out_name: 3D_binary_raw_diff_alti_refined.tif

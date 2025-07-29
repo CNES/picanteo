@@ -1,0 +1,6 @@
+step_output_dir: tutorial_bitemporal_2D3D_pipeline/
+save_intermediate_data: True
+raster_to_filter: tutorial_bitemporal_2D3D_pipeline/ambiguity_filter_post/3D_binary_raw_diff_ambiguity_post_refined.tif
+min_surface: 12.0
+convex_hull: True
+out_name: final_3D_diff.tif

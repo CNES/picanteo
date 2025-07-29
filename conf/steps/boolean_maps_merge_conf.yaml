@@ -1,0 +1,10 @@
+# step_output_dir (str|Path): path to the step output directory    
+step_output_dir: <output_path>
+# layer1 (str|Path): Path to the first input change detection map    
+layer1: <change_map>.tif
+# layer2 (str|Path): Path to the first input change detection map    
+layer2: <change_map>.tif
+# operator (str): logical operator ('AND', 'OR', 'XOR', 'NAND', 'NOR', 'XNOR')
+operator: <logical_operator>
+# out_name (str, optional): output file name with extension
+out_name: <input_raster_refined>.tif

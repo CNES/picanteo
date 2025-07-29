@@ -1,0 +1,6 @@
+step_output_dir: tutorial_bitemporal_2D3D_pipeline
+save_intermediate_data: true
+layer1: tutorial_bitemporal_2D3D_pipeline/final_3D_diff.tif
+layer2: tutorial_bitemporal_2D3D_pipeline/final_2D_diff.tif
+operator: OR
+out_name: bitemporal_2D_3D_final_change_map.tif

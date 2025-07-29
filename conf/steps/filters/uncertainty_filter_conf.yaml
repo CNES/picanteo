@@ -1,0 +1,12 @@
+# step_output_dir (str|Path): path to the step output directory    
+step_output_dir: <output_path>
+# raster_to_filter (str|Path): path to the input raster to filter    
+raster_to_filter: <input_raster>.tif
+# filter (str|Path): path to the uncertainty map that is used to filter
+filter: <input_uncertainty>.tif
+# out_name (str, optional): output file name with extension
+out_name: <input_raster_refined>.tif
+# uncertainty_threshold (float): uncertainty threshold (value between 0 and 1)
+threshold: 0.6
+# greater (bool): if True, keep only the points that are greater than the threshold
+greater: False

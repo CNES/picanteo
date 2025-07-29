@@ -1,0 +1,27 @@
+step_output_dir: tutorial_bitemporal_2D3D_pipeline/semantic_segmentation_pre
+save_intermediate_data: True
+create_logdir: False
+pretrained_weights: data/weights/manet_cos1_weights.ckpt
+reprojection_dsm: tutorial_bitemporal_2D3D_pipeline/dsm_extraction_pre/dsm.tif
+
+### Model config ###
+dataloader:
+  batch_size: 8
+  num_workers: 1
+dataset:
+  overlap: 256
+  padding: false
+  patch_size: 512
+  shifted_border: true
+description: null
+input_img_path: data/pre_event_color1.tif
+model:
+  _target_: segmentation_models_pytorch.MAnet
+  activation: null
+  classes: 1
+  decoder_use_batchnorm: true
+  encoder_depth: 5
+  encoder_name: efficientnet-b7
+  encoder_weights: null
+  in_channels: 3
+num_classes: 2

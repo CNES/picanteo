@@ -1,0 +1,20 @@
+# pipeline (str): describe the pipeline to run    
+pipeline: basic_bitemporal_2d3d
+# pipeline_output_dir (str|Path): path to the step output directory    
+pipeline_output_dir: tutorial_bitemporal_2D3D_pipeline
+# save_intermediate_data (bool, optional): if True, retains intermediate files generated during the pipeline execution. 
+save_intermediate_data: True
+
+### Pipeline steps configuration ###
+# <step>_conf (str|Path): Path to the <step> yaml configuration file template
+dsm_extraction_pre_conf: "data/configs/dsm_extraction_pre_event.yaml"
+dsm_extraction_post_conf: "data/configs/dsm_extraction_post_event.yaml"
+semantic_segmentation_pre_conf: "data/configs/semantic_segmentation_pre.yaml"
+semantic_segmentation_post_conf: "data/configs/semantic_segmentation_post.yaml"
+elevation_filter_conf: "data/configs/elevation_filter.yaml"
+ambiguity_filter_pre_conf: "data/configs/ambiguity_filter_pre.yaml"
+ambiguity_filter_post_conf: "data/configs/ambiguity_filter_post.yaml"
+2d_morphologic_filter_conf: "data/configs/2d_morphologic_filter.yaml"
+3d_morphologic_filter_conf: "data/configs/3d_morphologic_filter.yaml"
+change_map_merging_conf: "data/configs/change_map_merging.yaml"
+

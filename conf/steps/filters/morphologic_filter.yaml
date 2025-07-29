@@ -1,0 +1,11 @@
+# step_output_dir (str|Path): path to the step output directory    
+step_output_dir: <output_path>
+# raster_to_filter (str|Path): path to the input raster to filter    
+raster_to_filter: <input_raster>.tif
+# min_surface (float): Minimum valid surface in square meter. If changes surface are lower than this value, remove it from the change map
+min_surface: 12.0
+# convex_hull (bool, optional): apply convex hull after the filter if True. Defaults to False
+convex_hull: False
+# out_name (str, optional): output file name with extension
+out_name: <input_raster_refined>.tif
+

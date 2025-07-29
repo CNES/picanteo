@@ -1,0 +1,6 @@
+step_output_dir: tutorial_bitemporal_2D3D_pipeline/
+save_intermediate_data: True
+raster_to_filter: tutorial_bitemporal_2D3D_pipeline/2D_binary_raw_diff.tif
+min_surface: 12.0
+convex_hull: True
+out_name: final_2D_diff.tif
