@@ -74,6 +74,8 @@ build:
     #- export HTTP_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
     #- export HTTPS_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
   script:
+    # Install missing lib in Docker (cv2 dependencies that are normally present on the local machine)
+    - apt-get update && apt-get install libgl1
     # Install picanteo + requirements in virtual environment
     - VENV="picanteo_venv" make install
     # Activate virtualenv
