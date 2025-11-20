@@ -120,18 +120,33 @@ class SemanticSegmentation(PicanteoStep):
         
         return new_state_dict 
 
+    def scale_min_max(self, image, lower_bound=0, upper_bound=255):
+        img_scaled = (image - lower_bound) / (upper_bound - lower_bound)
+        return img_scaled
+
     def normalize_image_percentiles(self, image, lower_percentile=2, upper_percentile=98):
         # @TO-DO: move to pre-processing
         lower_bound = np.percentile(image, lower_percentile)
         upper_bound = np.percentile(image, upper_percentile)
         
         image_clipped = np.clip(image, lower_bound, upper_bound)
+        if lower_bound == upper_bound:
+            image_normalized = (image_clipped - lower_bound) / (upper_bound - lower_bound + 1e9)
+        else:
+
+            image_normalized = (image_clipped - lower_bound) / (upper_bound - lower_bound)
         
-        image_normalized = (image_clipped - lower_bound) / (upper_bound - lower_bound)
-        
-        image_scaled = (image_normalized * 255).astype(np.uint8)
         
         return image_normalized
+    
+    def scale_by_factor(self, image, factor=10000):
+        image = image.astype(np.float32)
+        image /= factor
+        print(np.amin(image), np.amax(image))
+
+        return image
+        
+    
 
 
     def run(self) -> None:
@@ -147,18 +162,29 @@ class SemanticSegmentation(PicanteoStep):
         input_img_path = self.config["input_img_path"]
      
         device = self.get_device()
-
-        # get tiled dataset #Tiled
-        dataset = TiledInferenceDataset(self.config["input_img_path"], self.config["dataset"]["patch_size"], self.config["dataset"]["overlap"], self.config["dataset"]["padding"], self.config["dataset"]["shifted_border"])
-        
+        full_model = True
+       
+        save_mi = False
+        tta = False 
+        tiled = True
+        window_merger = True
+        if tiled:
+            dataset = TiledInferenceDataset(self.config["input_img_path"], self.config["dataset"]["patch_size"], self.config["dataset"]["overlap"], self.config["dataset"]["padding"], self.config["dataset"]["shifted_border"])
+        else:
+            dataset =  FullInferenceDataset(self.config["input_img_path"], self.config["dataset"]["patch_size"], self.config["dataset"]["overlap"], self.config["dataset"]["padding"], self.config["dataset"]["shifted_border"],tta=tta)
+        if tta:
+            inf_model = TTAModel(self.conf_path) 
+        else: 
+            inf_model = BaseModel(self.conf_path)
+        logger.debug(f"crop width crop height {dataset.crop_width}, {dataset.crop_height}")
         # get windowed and batched dataloader
         dataloader = DataLoader(dataset, batch_size=self.config["dataloader"]["batch_size"], shuffle=False, num_workers=self.config["dataloader"]["num_workers"])
         save_pe = True
-        save_mi = False
-        # get model instance
-        inf_model = TTAModel(self.conf_path)
-        merger = WindowMerger(input_img_path, output_folder=self.config["step_output_dir"], patch_size=self.config["dataset"]["patch_size"], num_classes=self.config["num_classes"], save_labels=True, save_pe=save_pe, save_mi=True) #WindowMerger(input_img_path, output_folder=self.config["step_output_dir"], patch_size=self.config["dataset"]["patch_size"], num_classes=self.config["num_classes"], save_labels=True, save_pe=save_pe, save_mi=False)
-
+        if window_merger:
+            merger = WindowMerger(input_img_path, output_folder=self.config["step_output_dir"], patch_size_w=dataset.crop_width, patch_size_h=dataset.crop_height, num_classes=self.config["num_classes"], save_labels=True, save_pe=save_pe, save_mi=save_mi)
+        else:
+            merger = MeanMerger(input_img_path, output_folder=self.config["step_output_dir"], patch_size_w=dataset.crop_width, patch_size_h=dataset.crop_height, num_classes=self.config["num_classes"], save_labels=True, save_pe=save_pe, save_mi=save_mi)
+        
         # main loop for inference @TO-DO: add entropy/MI for uncertainty estimation and check for TTA/Ensemble adaptations + multi-threading
         with rasterio.open(input_img_path, "r") as src:
            #@TO-DO: add multi-threading  to main loop: https://rasterio.readthedocs.io/en/stable/topics/concurrency.html
@@ -167,17 +193,16 @@ class SemanticSegmentation(PicanteoStep):
                 #with torch.no_grad():
                 for data in dataloader:
                     # B C H W 
-
-                    pre_mod_init = self.normalize_image_percentiles(data["image"].detach().cpu().numpy())[:,:3,:,:]
+                    pre_mod_init = self.normalize_image_percentiles(data["image"].detach().cpu().numpy()[:,:3,:,:] , 2.0, 98.0) #self.scale_min_max(data["image"].detach().cpu().numpy()[:,:3,:,:], -3.0, 3.0)
 
 
                     with torch.no_grad():
             
                         predicted_masks_out = inf_model(torch.from_numpy(pre_mod_init).float().to(device)) # N_MC B C H W 
-            
+                        if not tiled:
+                            predicted_masks_out = dataset.unpad_image(predicted_masks_out)
                         if predicted_masks_out.shape[2]==1:
                             predicted_masks_out = torch.concatenate((1.0-predicted_masks_out, predicted_masks_out), axis=2)
-                
                         predicted_masks_out += 1e-6
            
 
@@ -195,17 +220,17 @@ class SemanticSegmentation(PicanteoStep):
                                             col = data["col"][index]
                                             row = data["row"][index]
 
-                                            old_probas = src_probas.read(window=Window(col, row, self.config["dataset"]["patch_size"], self.config["dataset"]["patch_size"]))
-                                            old_weights = src_weights.read(window=Window(col, row, self.config["dataset"]["patch_size"], self.config["dataset"]["patch_size"]))
+                                            old_probas = src_probas.read(window=Window(col, row, dataset.crop_width, dataset.crop_height))
+                                            old_weights = src_weights.read(window=Window(col, row, dataset.crop_width, dataset.crop_height)) 
 
-                                            src_probas.write(old_probas + m*merger.win , window=Window(col, row, self.config["dataset"]["patch_size"], self.config["dataset"]["patch_size"]))  
-                                            src_weights.write(old_weights + merger.win , window=Window(col, row, self.config["dataset"]["patch_size"], self.config["dataset"]["patch_size"]))  
+                                            src_probas.write(old_probas + m*merger.win , window=Window(col, row, dataset.crop_width, dataset.crop_height)) 
+                                            src_weights.write(old_weights + merger.win , window=Window(col, row, dataset.crop_width, dataset.crop_height))  
                                             if save_pe:
-                                                old_pe = src_pe.read(window=Window(col, row, self.config["dataset"]["patch_size"], self.config["dataset"]["patch_size"]))
-                                                src_pe.write(old_pe + pred_entr[index,:,:].cpu().numpy()*merger.win[0,:,:] , window=Window(col, row, self.config["dataset"]["patch_size"], self.config["dataset"]["patch_size"]))  
+                                                old_pe = src_pe.read(window=Window(col, row, dataset.crop_width, dataset.crop_height))
+                                                src_pe.write(old_pe + pred_entr[index,:,:].cpu().numpy()*merger.win[0,:,:] , window=Window(col, row, dataset.crop_width, dataset.crop_height))
                                             if save_mi:
-                                                old_mi = src_mi.read(window=Window(col, row, self.config["dataset"]["patch_size"], self.config["dataset"]["patch_size"]))
-                                                src_mi.write(old_mi + mi[index,:,:].cpu().numpy()*merger.win[0,:,:] , window=Window(col, row, self.config["dataset"]["patch_size"], self.config["dataset"]["patch_size"]))  
+                                                old_mi = src_mi.read(window=Window(col, row, dataset.crop_width, dataset.crop_height))
+                                                src_mi.write(old_mi + mi[index,:,:].cpu().numpy()*merger.win[0,:,:] , window=Window(col, row, dataset.crop_width, dataset.crop_height))
                                             
 
                                     

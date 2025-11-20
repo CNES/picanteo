@@ -47,14 +47,15 @@ class FullInferenceDataset(InferenceDataset):
         patch_size,
         overlap,
         padding,
-        shifted_border
+        shifted_border,
+        tta
     ) :
         """Initialize a new  dataset instance.
 
         Args:
         """
         super().__init__(img_path,patch_size,overlap,padding,shifted_border)
-        
+        self.tta = tta
         self.dataset = self.setup()
         logger.debug(self.dataset)
 
@@ -75,9 +76,13 @@ class FullInferenceDataset(InferenceDataset):
 
         H_target = ((H + 31) // 32) * 32
         W_target = ((W + 31) // 32) * 32
-        target = max(H_target, W_target)
-        pad_h = H_target - H
-        pad_w = W_target - W
+        if self.tta:
+            target = max(H_target, W_target)
+            pad_h = target - H
+            pad_w = target - W
+        else:
+            pad_h = H_target - H
+            pad_w = W_target - W
 
         padded_image = np.pad(image, ((0, 0), (0, pad_h), (0, pad_w)), mode='symmetric')
 
@@ -87,9 +92,10 @@ class FullInferenceDataset(InferenceDataset):
 
 
     def unpad_image(self, padded_image):
-        H_original, W_original = img.shape[0], img.shape[1]
+        # N_MC B C H W 
+        H_original, W_original = self.crop_height, self.crop_width #img.shape[0], img.shape[1]
 
-        unpadded_image = padded_image[:H_original, :W_original, :]
+        unpadded_image = padded_image[:, :, :, :H_original, :W_original]
 
         return unpadded_image
     
@@ -111,7 +117,6 @@ class FullInferenceDataset(InferenceDataset):
 
           
             img = src.read(window=Window(col, row, patch_size_col,  patch_size_row))
-           
             img = self.pad_image(img)
             
             img = img.astype(np.float32)
@@ -163,7 +168,7 @@ class TiledInferenceDataset(InferenceDataset):
         else:
             self.dataset = self.get_tiled_dataset_crop()
 
-        logger.info("len dataset: " + str(len(self.dataset)))
+        logger.debug("len dataset: " + str(len(self.dataset)))
         logger.debug(self.dataset)
   
 
@@ -233,7 +238,7 @@ class TiledInferenceDataset(InferenceDataset):
 
     
 
-        logger.info(f"looping through {nr_tiles_y}, {nr_tiles_x} patches")
+        logger.debug(f"looping through {nr_tiles_y}, {nr_tiles_x} patches")
         dataset = []
         for ty in range(nr_tiles_y):
             for tx in range(nr_tiles_x):
@@ -274,7 +279,7 @@ class TiledInferenceDataset(InferenceDataset):
 
     
 
-        logger.info(f"looping through {nr_tiles_y}, {nr_tiles_x} patches")
+        logger.debug(f"looping through {nr_tiles_y}, {nr_tiles_x} patches")
         dataset = []
         for ty in range(nr_tiles_y):
             for tx in range(nr_tiles_x):

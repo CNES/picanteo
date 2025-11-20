@@ -21,7 +21,7 @@ from picanteo.utils.logger import logger
 
 
 class Merger(ABC):
-    def __init__(self, input_path, output_folder, patch_size, num_classes, save_labels=True, save_pe=True, save_mi=False):
+    def __init__(self, input_path, output_folder, patch_size_w, patch_size_h, num_classes, save_labels=True, save_pe=True, save_mi=False):
         """Init wrapper."""
         super().__init__()
 
@@ -32,8 +32,8 @@ class Merger(ABC):
 
         self.input_path = Path(input_path)
         self.output_folder = Path(output_folder)
-        self.patch_size = patch_size
-
+        self.patch_size_w = patch_size_w
+        self.patch_size_h = patch_size_h
         
         
         self.num_classes = num_classes
@@ -55,31 +55,35 @@ class Merger(ABC):
         self.out_profile_weights = input_raster.profile.copy()
         self.out_profile_weights["dtype"] = np.float32
         self.out_profile_weights["count"] = self.num_classes
+        self.out_profile_weights["BIGTIFF"] = "IF_SAFER"
         
 
         # create output probabilities per class
         self.out_profile_probas = input_raster.profile.copy()
         self.out_profile_probas["dtype"] = np.float32
         self.out_profile_probas["count"] = self.num_classes
+        self.out_profile_probas["BIGTIFF"] =  "IF_SAFER"
 
         # create final segmentation mask
         if self.save_labels:
             self.out_profile_labels = input_raster.profile.copy()
             self.out_profile_labels["dtype"] = np.uint8
             self.out_profile_labels["count"] = 1
-
+            self.out_profile_labels["BIGTIFF"] = "IF_SAFER"
+            self.out_profile_labels["nodata"] = 255
         # create predictive entropy (uncertainty estimation)
         if self.save_pe:
             self.out_profile_pe = input_raster.profile.copy()
             self.out_profile_pe["dtype"] = np.float32
             self.out_profile_pe["count"] = 1
+            self.out_profile_pe["BIGTIFF"] = "IF_SAFER"
 
         # create mutual information (uncertainty estimation)
         if self.save_mi:
             self.out_profile_mi = input_raster.profile.copy()
             self.out_profile_mi["dtype"] = np.float32
             self.out_profile_mi["count"] = 1
-
+            self.out_profile_mi["BIGTIFF"] = "IF_SAFER"
 
         out_weights = rasterio.open(self.output_folder / "weights.tif", 'w', **self.out_profile_weights)
         out_probas = rasterio.open(self.output_folder / "probas.tif", 'w', **self.out_profile_probas)
@@ -174,23 +178,22 @@ class Merger(ABC):
         logger.info("Inference complete")
     def get_merge_window(self):
         pass
-
 class MeanMerger(Merger):
-    def __init__(self, input_path, output_folder, patch_size, num_classes, save_labels=True, save_pe=False, save_mi=False) -> None:
+    def __init__(self, input_path, output_folder, patch_size_w, patch_size_h, num_classes, save_labels=True, save_pe=False, save_mi=False) -> None:
         """Init wrapper."""
-        super().__init__(input_path, output_folder, patch_size, num_classes, save_labels, save_pe, save_mi)
-    
+        super().__init__(input_path, output_folder, patch_size_w, patch_size_h, num_classes, save_labels, save_pe, save_mi)
+
     def get_merge_window(self):
-    
-        return np.ones((self.num_classes, self.patch_size, self.patch_size))
+
+        return np.ones((self.num_classes, self.patch_size_h, self.patch_size_w))
     
 class WindowMerger(Merger):
-    def __init__(self, input_path, output_folder, patch_size, num_classes, save_labels=True, save_pe=False, save_mi=False) -> None:
+    def __init__(self, input_path, output_folder, patch_size_w, patch_size_h, num_classes, save_labels=True, save_pe=False, save_mi=False) -> None:
         """Init wrapper."""
-        super().__init__(input_path, output_folder, patch_size, num_classes, save_labels, save_pe, save_mi)
+        super().__init__(input_path, output_folder, patch_size_w, patch_size_h, num_classes, save_labels, save_pe, save_mi)
     
     def get_merge_window(self):
         
-        wins =  [skimage.filters.window("hann", (self.patch_size, self.patch_size)) + 1e-8 for _ in range(self.num_classes)] # + 1e-8
+        wins =  [skimage.filters.window("hann", (self.patch_size_h, self.patch_size_w)) + 1e-8 for _ in range(self.num_classes)] # + 1e-8
     
         return np.stack(wins, axis=0)

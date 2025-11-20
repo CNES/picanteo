@@ -1,6 +1,7 @@
 # Third-party libraries 
 import numpy as np 
 from collections import OrderedDict
+
 from matplotlib import pyplot as plt
 #import onnxruntime as ort 
 import torch 
@@ -19,6 +20,7 @@ from matplotlib import pyplot as plt
 import skimage
 from abc import ABC
 from picanteo.utils.logger import logger
+
 
 class InferenceModel(nn.Module):
     """Basic inference model."""
@@ -53,8 +55,16 @@ class InferenceModel(nn.Module):
         old_state_dict = torch.load(best_checkpoint, map_location="cpu", weights_only=True)#
         new_state_dict = OrderedDict()
         
-        for key, value in old_state_dict.items():
-            new_state_dict[key.replace('model.', '')] = value
+        if "state_dict" in old_state_dict.keys():
+            for key, value in old_state_dict["state_dict"].items(): 
+                #@TO-DO: remove hot-fix for lightning model
+                if not "transform" in key:
+                    new_state_dict[key.replace('model.', '')] = value
+        else:
+            for key, value in old_state_dict.items():
+                #@TO-DO: remove hot-fix for lightning model
+                if not "transform" in key:
+                    new_state_dict[key.replace('model.', '')] = value
         
         return new_state_dict 
 
@@ -64,12 +74,12 @@ class InferenceModel(nn.Module):
         pretrained_weights = Path(weights_path)
         if not pretrained_weights.exists():
             raise ValueError(f'The given pretrained weights do not exist `{inference_config.pretrained_weights}`')
-    
+       
         model = instantiate(model_to_instantiate)
-        model.load_state_dict(self.get_state_dict(pretrained_weights), strict=False)  # strict=True)
+        model.load_state_dict(self.get_state_dict(pretrained_weights), strict=True) 
         model.eval()
         model.to(self.device)
-        logger.info(f"Model: {model_to_instantiate}, instantiated with weights: {weights_path}")
+        logger.debug(f"Model: {model_to_instantiate}, instantiated with weights: {weights_path}")
         return model
 
     def get_mutual_information(self, probas):
@@ -80,27 +90,20 @@ class InferenceModel(nn.Module):
 
         n_classes = probas.shape[n_classes_index]
      
-        #print("n_mc:" + str(n_mc_samples))
-        #print("classes:" + str(n_classes))
+    
 
-        expected_p = torch.mean(probas, dim=n_mc_index)
-        #print("expected p (mean proba), should be BS C W H", expected_p.shape)
+        expected_p = torch.mean(probas, dim=n_mc_index) # B, C, W, H
+        
+        predictive_entropy = -torch.sum(expected_p*torch.log(expected_p), dim=1) # B, W, H
 
-        predictive_entropy = -torch.sum(expected_p*torch.log(expected_p), dim=1)
-        #print("predictive entropy, should be BS W H", predictive_entropy.shape)
-        del expected_p
-        MC_entropy = torch.sum(probas*torch.log(probas), dim=n_classes_index)
-        #print("MC entropy, should be NMC BS W H", MC_entropy.shape)
-        #del probas
-        expected_entropy = -torch.mean(MC_entropy, dim=0)
-        #print("expected entropy, should be  BS W H", expected_entropy.shape)
+        MC_entropy = torch.sum(probas*torch.log(probas), dim=n_classes_index) # NMC, B, W, H
+        
+        expected_entropy = -torch.mean(MC_entropy, dim=0) # B, W, H
         normed_predictive_entropy = predictive_entropy/np.log(n_classes)
-        del MC_entropy
+       
        
         mi = predictive_entropy - expected_entropy #normed_predictive_entropy - expected_entropy
    
-        del expected_entropy
-
         return normed_predictive_entropy, mi 
 
 
@@ -126,14 +129,12 @@ class BaseModel(InferenceModel):
     def forward(self, patches: torch.Tensor):
         probas = torch.zeros((self.nr_samples, patches.shape[0], self.nr_classes, patches.shape[2], patches.shape[3]),device=self.device)
 
-        print("probas tensor", probas.shape)
         for i in range(0,self.nr_samples):
             logits = self.model(patches)
-            print(logits.shape)
             probs = self.logits_to_probabilities(logits)
        
             probas[i]= self.logits_to_probabilities(logits)
-            print("probas for one run", probas[i].shape)
+           
         
         return probas 
 
@@ -155,7 +156,7 @@ class MCDOModel(InferenceModel):
 
         for i in range(0,self.nr_samples):
             logits = self.model(patches)
-            print(logits.shape)
+           
             probs = self.logits_to_probabilities(logits)
        
             probas[i]= self.logits_to_probabilities(logits)
@@ -183,8 +184,8 @@ class TTAModel(InferenceModel):
             probs.append(probas)
         reversed_probas = self.reverse_tta(probs)
         probas = np.asarray([l.cpu().numpy() for l in reversed_probas])
-    
-        
+       
+
         return torch.from_numpy(probas) 
     
     def apply_tta(self, image):
