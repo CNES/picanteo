@@ -43,6 +43,7 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf
 import rasterio 
 from torchvision.transforms import functional as TF
+from functools import partial
 
 from tqdm import tqdm
 from picanteo.toolbox.data_extraction._2D.semantic_segmentation.inference_model import InferenceModel, BaseModel, TTAModel
@@ -142,12 +143,9 @@ class SemanticSegmentation(PicanteoStep):
     def scale_by_factor(self, image, factor=10000):
         image = image.astype(np.float32)
         image /= factor
-        print(np.amin(image), np.amax(image))
 
         return image
         
-    
-
 
     def run(self) -> None:
         """
@@ -162,12 +160,24 @@ class SemanticSegmentation(PicanteoStep):
         input_img_path = self.config["input_img_path"]
      
         device = self.get_device()
-        full_model = True
-       
-        save_mi = False
-        tta = False 
-        tiled = True
-        window_merger = True
+
+        # get normalization parameters
+        if self.config["normalization"]["percentile_low"] is not None and self.config["normalization"]["percentile_high"] is not None: 
+            norm_patch = partial(self.normalize_image_percentiles, lower_percentile=self.config["normalization"]["percentile_low"], upper_percentile=self.config["normalization"]["percentile_high"])
+            logger.info("Use patch-based percentile normalization")
+        if self.config["normalization"]["scale_min"] is not None and self.config["normalization"]["scale_max"] is not None: 
+            norm_patch = partial(self.scale_min_max, lower_bound=self.config["normalization"]["scale_min"], upper_bound=self.config["normalization"]["scale_max"])
+            logger.info("Use global min_max scaling")
+        if self.config["normalization"]["scale_factor"] is not None:
+            norm_patch = partial(self.scale_by_factor, factor=self.config["normalization"]["scale_factor"])
+            logger.info("Use global max scaling")
+
+        # get inference parameters
+        save_mi = self.config["inference"]["save_mutual_information"]
+        save_pe = self.config["inference"]["save_predictive_entropy"]
+        tta = self.config["inference"]["tta"] 
+        tiled = self.config["inference"]["tiled"] 
+        window_merger = self.config["inference"]["weighted_merging"] 
         if tiled:
             dataset = TiledInferenceDataset(self.config["input_img_path"], self.config["dataset"]["patch_size"], self.config["dataset"]["overlap"], self.config["dataset"]["padding"], self.config["dataset"]["shifted_border"])
         else:
@@ -179,7 +189,6 @@ class SemanticSegmentation(PicanteoStep):
         logger.debug(f"crop width crop height {dataset.crop_width}, {dataset.crop_height}")
         # get windowed and batched dataloader
         dataloader = DataLoader(dataset, batch_size=self.config["dataloader"]["batch_size"], shuffle=False, num_workers=self.config["dataloader"]["num_workers"])
-        save_pe = True
         if window_merger:
             merger = WindowMerger(input_img_path, output_folder=self.config["step_output_dir"], patch_size_w=dataset.crop_width, patch_size_h=dataset.crop_height, num_classes=self.config["num_classes"], save_labels=True, save_pe=save_pe, save_mi=save_mi)
         else:
@@ -193,7 +202,7 @@ class SemanticSegmentation(PicanteoStep):
                 #with torch.no_grad():
                 for data in dataloader:
                     # B C H W 
-                    pre_mod_init = self.normalize_image_percentiles(data["image"].detach().cpu().numpy()[:,:3,:,:] , 2.0, 98.0) #self.scale_min_max(data["image"].detach().cpu().numpy()[:,:3,:,:], -3.0, 3.0)
+                    pre_mod_init = norm_patch(data["image"].detach().cpu().numpy()[:,:self.config["model"]["in_channels"],:,:])
 
 
                     with torch.no_grad():
@@ -213,7 +222,7 @@ class SemanticSegmentation(PicanteoStep):
                             with rasterio.open(Path(self.config["step_output_dir"]) / "weights.tif", "r+") as src_weights:
 
                                 with rasterio.open(Path(self.config["step_output_dir"]) / "predictive_entropy.tif", "r+") if save_pe else contextlib.nullcontext() as src_pe:
-                                    with rasterio.open(Path(self.config["step_output_dir"]) / "mutual_information.tif", "r+") if save_pe else contextlib.nullcontext() as src_mi:
+                                    with rasterio.open(Path(self.config["step_output_dir"]) / "mutual_information.tif", "r+") if save_mi else contextlib.nullcontext() as src_mi:
                                         for index in range(0, predicted_masks_out.shape[0]):
                                             m = predicted_masks_out[index,:,:,:]
                                            

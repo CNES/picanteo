@@ -6,6 +6,18 @@ dataset:
   padding: false
   patch_size: 512 #256
   shifted_border: true
+normalization:
+  scale_min: null
+  scale_max: null
+  percentile_low: 2
+  percentile_high: 98
+  scale_factor: null
+inference:
+  tta: true
+  tiled: true
+  weighted_merging: true
+  save_predictive_entropy: true
+  save_mutual_information: false
 description: null
 input_img_path: ???
 model:
