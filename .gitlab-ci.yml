@@ -90,6 +90,8 @@ deploy-github:
     entrypoint: [""]
   before_script:
     # Set git credentials
+    - apk add --no-cache ca-certificates
+    - update-ca-certificates
     - git config --global user.email "${GITLAB_USER_EMAIL}"
     - git config --global user.name "${GITLAB_USER_NAME}"
   script:
