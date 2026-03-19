@@ -21,4 +21,4 @@
 """
     This module is used to centralize the current version of Picanteo.
 """
-__version__ = "0.1.0"
+__version__ = "0.1.1"
