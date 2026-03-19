@@ -79,10 +79,6 @@ build:
     # Test picanteo basic command
     - picanteo -h
     - deactivate
-  artifacts:
-    # keeps the artifact for next steps (venv, etc.)
-    untracked: true
-    expire_in: 1 day
 
 deploy-github:
   stage: deploy
