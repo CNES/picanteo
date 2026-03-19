@@ -9,10 +9,22 @@ dataloader:
   batch_size: 8
   num_workers: 1
 dataset:
-  overlap: 256
+  overlap: 256 #128
   padding: false
-  patch_size: 512
+  patch_size: 512 #256
   shifted_border: true
+normalization:
+  scale_min: null
+  scale_max: null
+  percentile_low: 2
+  percentile_high: 98
+  scale_factor: null
+inference:
+  tta: false
+  tiled: false
+  weighted_merging: true
+  save_predictive_entropy: true
+  save_mutual_information: false
 description: null
 input_img_path: data/post_event_color1.tif
 model:
