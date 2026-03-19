@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Centre National d'Etudes Spatiales (CNES).
+# Copyright (c) 2025-2026 Centre National d'Etudes Spatiales (CNES).
 #
 # This file is part of Picanteo
 # (see https://github.com/CNES/picanteo).
@@ -20,13 +20,13 @@
 
 # Workflow to avoid pipeline duplication between branch and MR: https://docs.gitlab.com/ee/ci/yaml/workflow.html#switch-between-branch-pipelines-and-merge-request-pipelines
 workflow:
-    rules:
-      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
-        when: never
-      - if: $CI_COMMIT_BRANCH
-      - if: $CI_COMMIT_TAG =~ /^v.*/
-  
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG =~ /^v.*/
+
 # Defines groups of steps
 stages:
   - init
@@ -58,7 +58,7 @@ variables:
   # Local artifactory Dockerhub URL containing copies of docker hub images
   ARTIFACTORY_URL: "${ARTIFACTORY_HOST}/docker"
   # Github repository
-  GITHUB_REPO: "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/CNES/picanteo.git"
+  GITHUB_REPO: "https://${CARS_CNES_GITHUB_TOKEN_USERNAME}:${CARS_CNES_GITHUB_TOKEN_PASSWORD}@github.com/CNES/picanteo.git"
 
 
 # Steps:
@@ -69,10 +69,6 @@ build:
   stage: init
   image:
     ${ARTIFACTORY_URL}/${TAG_IMAGE_PYTHON}
-    #  before_script:
-    # set up proxy (CNES specificity)
-    #- export HTTP_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
-    #- export HTTPS_PROXY=http://${PROXY_USER}:${PROXY_PWD}@proxy-tech-web.cnes.fr:8060
   script:
     # Install missing lib in Docker (cv2 dependencies that are normally present on the local machine)
     - apt-get update && apt-get -y install libgl1
@@ -97,8 +93,7 @@ deploy-github:
     name: ${ARTIFACTORY_URL}/${TAG_IMAGE_GIT}
     entrypoint: [""]
   before_script:
-    # Set proxy and git credentials
-    - git config --global http.proxy "http://${PROXY_USER}:${PROXY_PWD}@${PROXY_URL}"
+    # Set git credentials
     - git config --global user.email "${GITLAB_USER_EMAIL}"
     - git config --global user.name "${GITLAB_USER_NAME}"
   script:
